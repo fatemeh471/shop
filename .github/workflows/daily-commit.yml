@@ -2,7 +2,7 @@ name: Daily Commit
 
 on:
   schedule:
-    - cron: "30 7 * * *"  
+    - cron: "30 7 * * *" # هر روز ساعت 11:00 صبح ایران
   workflow_dispatch:
 
 permissions:
@@ -13,21 +13,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
 
       - name: Update activity
         run: |
-          echo "$(date)" >> activity.log
+          echo "Last update: $(date -u)" > activity.log
 
-      - name: Commit changes
+      - name: Commit and Push
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add activity.log
 
-          git diff --cached --quiet || git commit -m "chore: daily activity"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
 
-      - name: Push
-        run: |
-          git push
+          git commit -m "chore: daily activity"
+          git push origin master
